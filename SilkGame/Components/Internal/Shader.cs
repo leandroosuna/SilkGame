@@ -8,9 +8,10 @@ namespace SilkGame
     public class Shader : IDisposable
     {
         private uint handle;
-        private GL gl;
+        private GL GL;
         private bool ignoreUniformsNotFound;
 
+        private Dictionary<string, int> uniformLocations = new Dictionary<string, int>();
         public Shader(GL glContext, string name, bool ignoreUniformsNotFound = false) : 
             this(glContext, $"Shaders/{name}.vert", $"Shaders/{name}.frag", ignoreUniformsNotFound)
         {
@@ -18,102 +19,91 @@ namespace SilkGame
         }
         public Shader(GL glContext, string vertexPath, string fragmentPath, bool ignoreUniformsNotFound = false)
         {
-            gl = glContext;
+            GL = glContext;
             
             uint vertex = LoadShader(ShaderType.VertexShader, vertexPath);
             uint fragment = LoadShader(ShaderType.FragmentShader, fragmentPath);
-            handle = gl.CreateProgram();
-            gl.AttachShader(handle, vertex);
-            gl.AttachShader(handle, fragment);
-            gl.LinkProgram(handle);
-            gl.GetProgram(handle, GLEnum.LinkStatus, out var status);
+            handle = GL.CreateProgram();
+            GL.AttachShader(handle, vertex);
+            GL.AttachShader(handle, fragment);
+            GL.LinkProgram(handle);
+            GL.GetProgram(handle, GLEnum.LinkStatus, out var status);
             if (status == 0)
             {
-                throw new Exception($"Program failed to link with error: {gl.GetProgramInfoLog(handle)}");
+                throw new Exception($"Program failed to link with error: {GL.GetProgramInfoLog(handle)}");
             }
-            gl.DetachShader(handle, vertex);
-            gl.DetachShader(handle, fragment);
-            gl.DeleteShader(vertex);
-            gl.DeleteShader(fragment);
+            GL.DetachShader(handle, vertex);
+            GL.DetachShader(handle, fragment);
+            GL.DeleteShader(vertex);
+            GL.DeleteShader(fragment);
             this.ignoreUniformsNotFound = ignoreUniformsNotFound;
         }
 
         public void SetAsCurrentGLProgram()
         {
-            gl.UseProgram(handle);
+            GL.UseProgram(handle);
         }
 
-        public void SetUniform(string name, int value)
-        {
-            int location = gl.GetUniformLocation(handle, name);
-            if (location == -1)
-            {
-                if (ignoreUniformsNotFound)
-                    return;
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-            gl.Uniform1(location, value);
-        }
         
+        int GetUniformLocation(string name)
+        {
+            if (uniformLocations.TryGetValue(name, out int location))
+                return location;
+                
+            location = GL.GetUniformLocation(handle, name);
 
-        public unsafe void SetUniform(string name, Matrix4x4 value)
+            if(location != -1)
+                uniformLocations.Add(name, location);
+            return location;
+
+        }
+        public unsafe void SetUniform<T>(string name, T value)
         {
-            //A new overload has been created for setting a uniform so we can use the transform in our shader.
-            int location = gl.GetUniformLocation(handle, name);
-            if (location == -1)
+            int location = GetUniformLocation(name);
+            if(location == -1)
             {
                 if (ignoreUniformsNotFound)
                     return;
                 throw new Exception($"{name} uniform not found on shader.");
             }
-            gl.UniformMatrix4(location, 1, false, (float*) &value);
+            switch (value)
+            {
+                case int i:         GL.Uniform1(location, i); break;
+                case float f:       GL.Uniform1(location, f); break;
+                case double d:      GL.Uniform1(location, d); break;
+                case Vector2 v2:    GL.Uniform2(location, v2); break;
+                case Vector3 v3:    GL.Uniform3(location, v3); break;
+                case Vector4 v4:    GL.Uniform4(location, v4); break;
+                case Matrix4x4 m:   GL.UniformMatrix4(location, 1, false, (float*)&m); break;
+
+                default: throw new Exception($"{typeof(T).Name} missing GL.UniformT entry");
+            }
+
+        }
+        public void SetTextureUniform(uint tex, string name, int slot)
+        {
+            GL.ActiveTexture(TextureUnit.Texture0 + slot);
+            GL.BindTexture(TextureTarget.Texture2D, tex);
+            SetUniform(name, slot);
+        }
+        public void SetTextureUniform(Texture tex, string name, int slot)
+        {
+            tex.Bind(TextureUnit.Texture0 + slot);
+            SetUniform(name, slot);
         }
 
-        public void SetUniform(string name, float value)
-        {
-            int location = gl.GetUniformLocation(handle, name);
-            if (location == -1)
-            {
-                if (ignoreUniformsNotFound)
-                    return;
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-            gl.Uniform1(location, value);
-        }
-        public void SetUniform(string name, Vector2 value)
-        {
-            int location = gl.GetUniformLocation(handle, name);
-            if (location == -1)
-            {
-                if (ignoreUniformsNotFound)
-                    return;
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-            gl.Uniform2(location, value);
-        }
-        public void SetUniform(string name, Vector3 value)
-        {
-            int location = gl.GetUniformLocation(handle, name);
-            if (location == -1)
-            {
-                if (ignoreUniformsNotFound)
-                    return;
-                throw new Exception($"{name} uniform not found on shader.");
-            }
-            gl.Uniform3(location, value);
-        }
         public void Dispose()
         {
-            gl.DeleteProgram(handle);
+            GL.DeleteProgram(handle);
         }
 
         private uint LoadShader(ShaderType type, string path)
         {
             string src = File.ReadAllText(path);
-            uint handle = gl.CreateShader(type);
-            gl.ShaderSource(handle, src);
-            gl.CompileShader(handle);
-            string infoLog = gl.GetShaderInfoLog(handle);
+            uint handle = GL.CreateShader(type);
+            GL.ShaderSource(handle, src);
+            GL.CompileShader(handle);
+            string infoLog = GL.GetShaderInfoLog(handle);
             if (!string.IsNullOrWhiteSpace(infoLog))
             {
                 throw new Exception($"Error compiling shader of type {type}, failed with error {infoLog}");

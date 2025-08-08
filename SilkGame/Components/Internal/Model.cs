@@ -11,11 +11,11 @@ namespace SilkGame
         {
             var assimp = Silk.NET.Assimp.Assimp.GetApi();
             _assimp = assimp;
-            _gl = gl;
+            GL = gl;
             LoadModel(path);
         }
 
-        private readonly GL _gl;
+        private readonly GL GL;
         private Assimp _assimp;
         private List<Texture> _texturesLoaded = new List<Texture>();
         public string Directory { get; protected set; } = string.Empty;
@@ -126,7 +126,7 @@ namespace SilkGame
                 textures.AddRange(heightMaps);
 
             // return a mesh object created from the extracted mesh data
-            var result = new Mesh(_gl, BuildVertices(vertices), BuildIndices(indices), textures);
+            var result = new Mesh(GL, BuildVertices(vertices), BuildIndices(indices), textures);
             return result;
         }
 
@@ -150,7 +150,7 @@ namespace SilkGame
                 }
                 if (!skip)
                 {
-                    var texture = new Texture(_gl, Directory, type);
+                    var texture = new Texture(GL, Directory, type);
                     texture.Path = path;
                     textures.Add(texture);
                     _texturesLoaded.Add(texture);
