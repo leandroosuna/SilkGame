@@ -14,8 +14,7 @@ namespace SilkGame
     {
         private static IWindow window;
         private static GL GL;
-        private static IKeyboard primaryKeyboard;
-        private static IMouse primaryMouse;
+        
         private static Shader BasicShader;
         private static Shader PostProcessShader;
 
@@ -49,8 +48,8 @@ namespace SilkGame
             window.Dispose();
             
         }
-        static uint frameBufferAlt;
-        static uint TextureColorBuffer;
+
+        
         private static unsafe void OnLoad()
         {
             window.Center();
@@ -58,6 +57,7 @@ namespace SilkGame
             InputHelper.Init(window);
             GL = GL.GetApi(window);
             FullScreenQuad.Init(GL);
+            RTManager.Init(GL, window.FramebufferSize);
 
             BasicShader = new Shader(GL, "basic-model");
             PostProcessShader = new Shader(GL, "basic-post-process");
@@ -77,52 +77,11 @@ namespace SilkGame
 
             InputHelper.SetCamera(Camera);
 
-            GL.GenFramebuffers(1, out frameBufferAlt);
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBufferAlt);
+            RTManager.CreateRenderTarget("mod1");
+            RTManager.CreateRenderTarget("mod2");
 
-            int fbWidth = window.FramebufferSize.X;
-            int fbHeight = window.FramebufferSize.Y;
-            
-            // create color texture (RGBA8)
-            GL.GenTextures(1, out TextureColorBuffer);
-            GL.BindTexture(TextureTarget.Texture2D, TextureColorBuffer);
-            GL.TexImage2D(
-                TextureTarget.Texture2D,
-                0,
-                (int)InternalFormat.Rgba8,
-                (uint)fbWidth,
-                (uint)fbHeight,
-                0,
-                PixelFormat.Rgba,
-                PixelType.UnsignedByte,
-                null);
-            int texW, texH;
-            GL.GetTexLevelParameter(TextureTarget.Texture2D, 0, GLEnum.TextureWidth, out texW);
-            GL.GetTexLevelParameter(TextureTarget.Texture2D, 0, GLEnum.TextureHeight, out texH);
-           
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBaseLevel, 0);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 0);
-
-            // attach texture to FBO
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, TextureColorBuffer, 0);
-
-            // create and attach a depth+stencil renderbuffer
-            GL.GenRenderbuffers(1, out uint rboDepth);
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, rboDepth);
-            GL.RenderbufferStorage(GLEnum.Renderbuffer, GLEnum.Depth24Stencil8, (uint)fbWidth, (uint)fbHeight);
-
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, rboDepth);
-
-            // unbind and tidy
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
         }
-        
+
         private static unsafe void OnUpdate(double deltaTime)
         {
             InputHelper.Update();
@@ -145,7 +104,7 @@ namespace SilkGame
                 window.Title = $"Silk.NET OPENGL - FPS {fps}";
             }
 
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBufferAlt);
+            RTManager.SetAsActive("mod1");
             GL.Enable(EnableCap.DepthTest);
             GL.ClearDepth(1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -169,6 +128,10 @@ namespace SilkGame
                 GL.DrawElements(Silk.NET.OpenGL.PrimitiveType.Triangles, (uint)mesh.Indices.Length, DrawElementsType.UnsignedInt, null);
             }
 
+            RTManager.SetAsActive("MOD2");
+            GL.Enable(EnableCap.DepthTest);
+            GL.ClearDepth(1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             world = Matrix4x4.CreateScale(20) * Matrix4x4.CreateTranslation(new Vector3(0, -5, 0));
 
@@ -189,14 +152,18 @@ namespace SilkGame
                 GL.DrawElements(Silk.NET.OpenGL.PrimitiveType.Triangles, (uint)mesh.Indices.Length, DrawElementsType.UnsignedInt, null);
             }
 
-
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            RTManager.SetAsActive("screen");
             GL.ClearDepth(1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             PostProcessShader.SetAsCurrentGLProgram();
             PostProcessShader.SetUniform("uTime", (float)time);
-            PostProcessShader.SetTextureUniform(TextureColorBuffer, "uTexture", 0);
+
+            var tex = RTManager.GetTargetTextureID("mod1", "color");
+            PostProcessShader.SetTextureUniform(tex, "uMod1", 0);
+            tex = RTManager.GetTargetTextureID("mod2", "COLOR");
+            PostProcessShader.SetTextureUniform(tex, "uMod2", 1);
+
             FullScreenQuad.Draw();
             
         }
