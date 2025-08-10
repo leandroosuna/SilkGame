@@ -20,7 +20,13 @@ namespace SilkGame
         private List<Texture> _texturesLoaded = new List<Texture>();
         public string Directory { get; protected set; } = string.Empty;
         public List<Mesh> Meshes { get; protected set; } = new List<Mesh>();
-        
+        public void DrawMeshes()
+        {
+            foreach (var mesh in Meshes)
+            {
+                mesh.Draw();
+            }
+        }
         private unsafe void LoadModel(string path)
         {
             var scene = _assimp.ImportFile(path, (uint)PostProcessSteps.Triangulate);
@@ -182,7 +188,8 @@ namespace SilkGame
         {
             return indices.ToArray();
         }
-
+        
+        
         public void Dispose()
         {
             foreach (var mesh in Meshes)

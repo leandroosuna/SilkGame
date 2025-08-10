@@ -10,7 +10,9 @@ This is a simple 3D game template built on Silk.NET using OpenGL 4.1
 - [x] Add Better Shader uniform abstraction
 - [x] Add FullScreenQuad
 - [x] Add post processing pipeline
-- [ ] Add render target abstraction
+- [x] Add render target abstraction
+- [x] Add multiple render target support
+- [x] Fix Model-Mesh Draw abstractions
 - [ ] Add simple font rendering
 - [ ] Add imgui
 

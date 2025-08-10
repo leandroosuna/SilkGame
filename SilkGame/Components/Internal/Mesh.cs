@@ -1,3 +1,4 @@
+using Silk.NET.Assimp;
 using Silk.NET.OpenGL;
 
 namespace SilkGame
@@ -7,24 +8,20 @@ namespace SilkGame
         public Mesh(GL gl, float[] vertices, uint[] indices, List<Texture> textures)
         {
             GL = gl;
-            Vertices = vertices;
-            Indices = indices;
             Textures = textures;
-            SetupMesh();
+            SetupMesh(indices, vertices);
         }
-
-        public float[] Vertices { get; private set; }
-        public uint[] Indices { get; private set; }
+ 
         public IReadOnlyList<Texture> Textures { get; private set; }
-        public VertexArrayObject<float, uint> VAO { get; set; }
-        public BufferObject<float> VBO { get; set; }
-        public BufferObject<uint> EBO { get; set; }
-        public GL GL { get; }
+        VertexArrayObject<float, uint> VAO { get; set; }
+        uint IndicesLength { get; set; }
+        GL GL { get; }
 
-        public unsafe void SetupMesh()
+        public unsafe void SetupMesh(uint[] indices, float[] vertices)
         {
-            EBO = new BufferObject<uint>(GL, Indices, BufferTargetARB.ElementArrayBuffer);
-            VBO = new BufferObject<float>(GL, Vertices, BufferTargetARB.ArrayBuffer);
+            var EBO = new BufferObject<uint>(GL, indices, BufferTargetARB.ElementArrayBuffer);
+            var VBO = new BufferObject<float>(GL, vertices, BufferTargetARB.ArrayBuffer);
+            IndicesLength = (uint)indices.Length;
             VAO = new VertexArrayObject<float, uint>(GL, VBO, EBO);
 
             VAO.Bind();
@@ -43,17 +40,17 @@ namespace SilkGame
             GL.BindVertexArray(0);
         }
 
-        public void Bind()
+        public unsafe void Draw()
         {
             VAO.Bind();
+
+            GL.DrawElements(Silk.NET.OpenGL.PrimitiveType.Triangles, IndicesLength, DrawElementsType.UnsignedInt, null);
         }
 
         public void Dispose()
         {
             Textures = null;
             VAO.Dispose();
-            VBO.Dispose();
-            EBO.Dispose();
         }
     }
 }

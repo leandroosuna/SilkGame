@@ -3,14 +3,17 @@
 in vec2 texCoords;
 out vec4 FragColor;
 
-uniform sampler2D uMod1;
-uniform sampler2D uMod2;
+uniform sampler2D uR;
+uniform sampler2D uG;
+uniform sampler2D uB;
 
-uniform float uTime;
+//uniform float uTime;
+
 void main()
 {
-    vec3 color = texture(uMod1, texCoords).rgb;
-    vec3 color2 = texture(uMod2, texCoords).rgb;
+    float r = texture(uR, texCoords).r;
+    float g = texture(uG, texCoords).g;
+    float b = texture(uB, texCoords).b;
 
-    FragColor = vec4((color.r + color2.r)* sin(uTime), (color.g + color2.g) * cos(uTime), (color.b + color2.b), 1);
+    FragColor = vec4(r,g,b, 1);
 }

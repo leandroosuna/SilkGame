@@ -19,6 +19,10 @@ namespace SilkGame.Components.Internal
         {
             CreateRenderTarget(name, windowSize, ["color"]);
         }
+        public static void CreateRenderTarget(string name, string[] targetNames)
+        {
+            CreateRenderTarget(name, windowSize, targetNames);
+        }
         public static unsafe void CreateRenderTarget(string name, Vector2D<int> size, string[] targetNames)
         {
             var n = name.ToLower();
@@ -36,32 +40,44 @@ namespace SilkGame.Components.Internal
 
             var buffers = new Dictionary<string, uint>();
 
-            uint tcb;
-            for(int i = 0; i < rt.ColorTargetCount; i++)
+            
+            if(rt.ColorTargetCount > 1)
             {
-                // create color texture (RGBA8)
-                GL.GenTextures(1, out tcb);
-                buffers.Add(targetNames[i], tcb);
+                uint tcb;
+                GLEnum[] attachments = new GLEnum[rt.ColorTargetCount];
+                for(int i = 0; i < rt.ColorTargetCount; i++)
+                {
+                    // create color texture (RGBA8)
+                    GL.GenTextures(1, out tcb);
+                    buffers.Add(targetNames[i], tcb);
 
-                GL.BindTexture(TextureTarget.Texture2D, tcb);
-                GL.TexImage2D(
-                    TextureTarget.Texture2D,
-                    0,
-                    (int)InternalFormat.Rgba8,
-                    (uint)size.X,
-                    (uint)size.Y,
-                    0,
-                    PixelFormat.Rgba,
-                    PixelType.UnsignedByte,
-                    null);
+                    GL.BindTexture(TextureTarget.Texture2D, tcb);
+                    GL.TexImage2D(
+                        TextureTarget.Texture2D,
+                        0,
+                        (int)InternalFormat.Rgba8,
+                        (uint)size.X,
+                        (uint)size.Y,
+                        0,
+                        PixelFormat.Rgba,
+                        PixelType.UnsignedByte,
+                        null);
 
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
+                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
 
-                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, 
-                    (FramebufferAttachment)((int)FramebufferAttachment.ColorAttachment0 + i), TextureTarget.Texture2D, tcb, 0);
-
+                    var att = (FramebufferAttachment.ColorAttachment0 + i);
+                    var cAtt = (GLEnum.ColorAttachment0 + i);
+                    attachments[i] = cAtt;
+                    GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, 
+                        att, TextureTarget.Texture2D, tcb, 0);
+                    
+                }
+                GL.DrawBuffers(rt.ColorTargetCount, attachments);
+                
             }
+
+            
             rt.TextureColorBuffers = buffers;
             // create and attach a depth+stencil renderbuffer
             GL.GenRenderbuffers(1, out uint rboDepth);

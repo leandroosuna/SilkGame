@@ -46,7 +46,6 @@ namespace SilkGame
             window.Run(); 
             //thread blocked here until the window is closed.
             window.Dispose();
-            
         }
 
         
@@ -59,7 +58,7 @@ namespace SilkGame
             FullScreenQuad.Init(GL);
             RTManager.Init(GL, window.FramebufferSize);
 
-            BasicShader = new Shader(GL, "basic-model");
+            BasicShader = new Shader(GL, "mrt-test");
             PostProcessShader = new Shader(GL, "basic-post-process");
             
             ModelFloor = new Model(GL, "Models/plane.obj");
@@ -77,8 +76,8 @@ namespace SilkGame
 
             InputHelper.SetCamera(Camera);
 
-            RTManager.CreateRenderTarget("mod1");
-            RTManager.CreateRenderTarget("mod2");
+            //RTManager.CreateRenderTarget("rt1");
+            RTManager.CreateRenderTarget("mrt", ["red", "green", "blue"]);
 
         }
 
@@ -104,7 +103,7 @@ namespace SilkGame
                 window.Title = $"Silk.NET OPENGL - FPS {fps}";
             }
 
-            RTManager.SetAsActive("mod1");
+            RTManager.SetAsActive("MRT"); // multiple render target test
             GL.Enable(EnableCap.DepthTest);
             GL.ClearDepth(1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -113,43 +112,35 @@ namespace SilkGame
             
             BasicShader.SetAsCurrentGLProgram();
             var world = Matrix4x4.CreateScale(10f) * Matrix4x4.CreateFromYawPitchRoll(MathF.PI * 0.5f, -MathF.PI * 0.5f, spin);
-            foreach (var mesh in ModelLogo.Meshes)
-            {
-                mesh.Bind();
-                BasicShader.SetUniform("uUseTexture", 0);
-                BasicShader.SetUniform("uWorld", world);
-                BasicShader.SetUniform("uView", Camera.View);
-                BasicShader.SetUniform("uProjection", Camera.Projection);
 
-                BasicShader.SetUniform("uColor", new Vector3(0, .75f, 1f));
-                BasicShader.SetUniform("uLightPos", new Vector3(50, 50, 50));
-                BasicShader.SetUniform("uViewPos", Camera.Position);
+            BasicShader.SetUniform("uUseTexture", 0);
+            BasicShader.SetUniform("uWorld", world);
+            BasicShader.SetUniform("uView", Camera.View);
+            BasicShader.SetUniform("uProjection", Camera.Projection);
 
-                GL.DrawElements(Silk.NET.OpenGL.PrimitiveType.Triangles, (uint)mesh.Indices.Length, DrawElementsType.UnsignedInt, null);
-            }
+            BasicShader.SetUniform("uColor", new Vector3(0, .75f, 1f));
+            BasicShader.SetUniform("uLightPos", new Vector3(50, 50, 50));
+            BasicShader.SetUniform("uViewPos", Camera.Position);
 
-            RTManager.SetAsActive("MOD2");
-            GL.Enable(EnableCap.DepthTest);
-            GL.ClearDepth(1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
+            //Draw every mesh with the same uniforms
+            ModelLogo.DrawMeshes();
+            
+            
             world = Matrix4x4.CreateScale(20) * Matrix4x4.CreateTranslation(new Vector3(0, -5, 0));
 
+            BasicShader.SetUniform("uUseTexture", 1);
+            BasicShader.SetTextureUniform(TextureFloor, name: "uTex", slot: 0);
+
+            BasicShader.SetUniform("uWorld", world);
+            BasicShader.SetUniform("uView", Camera.View);
+            BasicShader.SetUniform("uProjection", Camera.Projection);
+
+            BasicShader.SetUniform("uColor", new Vector3(1, 1, 1));
+            
+            //Draw every mesh with a variance
             foreach (var mesh in ModelFloor.Meshes)
             {
-                mesh.Bind();
-                BasicShader.SetUniform("uUseTexture", 1);
-                BasicShader.SetTextureUniform(TextureFloor, name: "uTex", slot: 0);
-
-                BasicShader.SetUniform("uWorld", world);
-                BasicShader.SetUniform("uView", Camera.View);
-                BasicShader.SetUniform("uProjection", Camera.Projection);
-
-                BasicShader.SetUniform("uColor", new Vector3(1, 1, 1));
-                BasicShader.SetUniform("uLightPos", new Vector3(50, 50, 50));
-                BasicShader.SetUniform("uViewPos", Camera.Position);
-
-                GL.DrawElements(Silk.NET.OpenGL.PrimitiveType.Triangles, (uint)mesh.Indices.Length, DrawElementsType.UnsignedInt, null);
+                mesh.Draw();
             }
 
             RTManager.SetAsActive("screen");
@@ -157,12 +148,15 @@ namespace SilkGame
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             PostProcessShader.SetAsCurrentGLProgram();
-            PostProcessShader.SetUniform("uTime", (float)time);
+            //PostProcessShader.SetUniform("uTime", (float)time);
 
-            var tex = RTManager.GetTargetTextureID("mod1", "color");
-            PostProcessShader.SetTextureUniform(tex, "uMod1", 0);
-            tex = RTManager.GetTargetTextureID("mod2", "COLOR");
-            PostProcessShader.SetTextureUniform(tex, "uMod2", 1);
+            var tex = RTManager.GetTargetTextureID("mrt", "red");
+            PostProcessShader.SetTextureUniform(tex, "uR", 0);
+            tex = RTManager.GetTargetTextureID("mrt", "green");
+            PostProcessShader.SetTextureUniform(tex, "uG", 1);
+            tex = RTManager.GetTargetTextureID("mrt", "blue");
+            PostProcessShader.SetTextureUniform(tex, "uB", 2);
+
 
             FullScreenQuad.Draw();
             

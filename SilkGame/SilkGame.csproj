@@ -21,6 +21,12 @@
     <None Update="Models\plane.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Shaders\mrt-test.frag">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\mrt-test.vert">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Shaders\basic-post-process.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
