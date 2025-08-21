@@ -13,7 +13,7 @@ namespace SilkGame
 
         private Dictionary<string, int> uniformLocations = new Dictionary<string, int>();
         public Shader(GL glContext, string name, bool ignoreUniformsNotFound = false) : 
-            this(glContext, $"Shaders/{name}.vert", $"Shaders/{name}.frag", ignoreUniformsNotFound)
+            this(glContext, $"Shaders/{name}/{name}.vert", $"Shaders/{name}/{name}.frag", ignoreUniformsNotFound)
         {
             
         }

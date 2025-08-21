@@ -6,8 +6,10 @@ using Silk.NET.Windowing;
 using SilkGame.Components.Cameras;
 using SilkGame.Components.Input;
 using SilkGame.Components.Internal;
+using SilkGame.Components.Internal.RT;
+using SilkGame.Components.Internal.Gui;
+
 using System.Numerics;
-using static System.Net.Mime.MediaTypeNames;
 namespace SilkGame
 {
     class Program
@@ -42,6 +44,8 @@ namespace SilkGame
             window.FramebufferResize += OnFramebufferResize;
             window.Closing += OnClose;
 
+            libtest.TestLib.Method();
+                
             Console.WriteLine("Running game");
             window.Run(); 
             //thread blocked here until the window is closed.
@@ -52,11 +56,13 @@ namespace SilkGame
         private static unsafe void OnLoad()
         {
             window.Center();
+            GL = GL.GetApi(window);
 
             InputHelper.Init(window);
-            GL = GL.GetApi(window);
+            GUIManager.Init(GL, window, InputHelper.GetInputContext());
             FullScreenQuad.Init(GL);
             RTManager.Init(GL, window.FramebufferSize);
+            //RTManager.SetAsActive("screen");
 
             BasicShader = new Shader(GL, "mrt-test");
             PostProcessShader = new Shader(GL, "basic-post-process");
@@ -76,6 +82,8 @@ namespace SilkGame
 
             InputHelper.SetCamera(Camera);
 
+
+
             //RTManager.CreateRenderTarget("rt1");
             RTManager.CreateRenderTarget("mrt", ["red", "green", "blue"]);
 
@@ -88,6 +96,8 @@ namespace SilkGame
 
             if (InputHelper.KeyDown(Key.Escape))
                 window.Close();
+
+            GUIManager.Update(deltaTime);
 
         }
         static float spin = 0;
@@ -107,6 +117,7 @@ namespace SilkGame
             GL.Enable(EnableCap.DepthTest);
             GL.ClearDepth(1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            //GL.PolygonMode(GLEnum.FrontAndBack, PolygonMode.Line);
 
             spin += (float)deltaTime;
             
@@ -142,7 +153,7 @@ namespace SilkGame
             {
                 mesh.Draw();
             }
-
+            //GL.PolygonMode(GLEnum.FrontAndBack, PolygonMode.Fill);
             RTManager.SetAsActive("screen");
             GL.ClearDepth(1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -159,6 +170,8 @@ namespace SilkGame
 
 
             FullScreenQuad.Draw();
+            
+            GUIManager.Draw(deltaTime);
             
         }
 

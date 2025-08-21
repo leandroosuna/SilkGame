@@ -20,6 +20,6 @@ void main()
     vs_out.normal = mat3(transpose(inverse(uWorld))) * vNormal;
     vs_out.texCoords = vTexCoords;
     
-    gl_Position = uProjection * uView * uWorld * vec4(vPos, 1.0);;
+    gl_Position = uProjection * uView * uWorld * vec4(vPos, 1.0);
     
 }

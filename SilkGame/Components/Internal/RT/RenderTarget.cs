@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SilkGame.Components.Internal
+namespace SilkGame.Components.Internal.RT
 {
     public class RenderTarget
     {

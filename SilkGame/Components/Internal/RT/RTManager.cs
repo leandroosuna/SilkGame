@@ -1,7 +1,7 @@
 ﻿using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
-namespace SilkGame.Components.Internal
+namespace SilkGame.Components.Internal.RT
 {
     public static class RTManager
     {
@@ -66,8 +66,8 @@ namespace SilkGame.Components.Internal
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Nearest);
                     GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Nearest);
 
-                    var att = (FramebufferAttachment.ColorAttachment0 + i);
-                    var cAtt = (GLEnum.ColorAttachment0 + i);
+                    var att = FramebufferAttachment.ColorAttachment0 + i;
+                    var cAtt = GLEnum.ColorAttachment0 + i;
                     attachments[i] = cAtt;
                     GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, 
                         att, TextureTarget.Texture2D, tcb, 0);

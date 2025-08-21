@@ -12,31 +12,42 @@
     <PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.22.0" />
     <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
+    <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Windowing.Common" Version="2.22.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="libtest">
+      <HintPath>..\..\libtest\libtest\bin\Debug\net8.0\libtest.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CascadiaMono.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Models\plane.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\mrt-test.frag">
+    <None Update="Shaders\mrt-test\mrt-test.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\mrt-test.vert">
+    <None Update="Shaders\mrt-test\mrt-test.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\basic-post-process.frag">
+    <None Update="Shaders\basic-post-process\basic-post-process.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\basic-post-process.vert">
+    <None Update="Shaders\basic-post-process\basic-post-process.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\basic-model.frag">
+    <None Update="Shaders\basic-model\basic-model.frag">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Shaders\basic-model.vert">
+    <None Update="Shaders\basic-model\basic-model.vert">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="cube.model">

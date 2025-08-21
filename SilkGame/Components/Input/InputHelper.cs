@@ -36,13 +36,15 @@ namespace SilkGame.Components.Input
             //    input.Mice[i].Scroll += OnMouseWheel;
             //}
             mouse = input.Mice.FirstOrDefault();
-            mouse.Cursor.CursorMode = CursorMode.Raw;
+            //mouse.Cursor.CursorMode = CursorMode.Raw;
+            mouse.Cursor.CursorMode = CursorMode.Normal;
             mouse.Position = (Vector2)window.Position + (Vector2)window.Size / 2;
 
             lastMousePosition = mouse.Position;
             MouseDelta = Vector2.Zero;
 
         }
+        public static IInputContext GetInputContext() { return input; }
         public static void SetCamera(Camera cam)
         {
             camera = cam;
